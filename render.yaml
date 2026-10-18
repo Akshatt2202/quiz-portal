@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: quiz-portal-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    # Free plan has no pre-deploy step, so migrations run during the build
+    buildCommand: npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      # Neon pooled connection string (host contains "-pooler")
+      - key: DATABASE_URL
+        sync: false
+      # Neon direct connection string, used by prisma migrate
+      - key: DIRECT_URL
+        sync: false
+      # Upstash Redis TCP URL, starts with rediss://
+      - key: REDIS_URL
+        sync: false
+      # Netlify site origin, e.g. https://your-site.netlify.app
+      - key: FRONTEND_URL
+        sync: false
