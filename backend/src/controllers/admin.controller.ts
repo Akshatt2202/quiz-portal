@@ -13,7 +13,13 @@ export const listConcepts = async (_req: any, res: Response) => {
 
 export const createQuiz = async (req: any, res: Response) => {
   try {
-    const { title, description, durationSeconds, shuffleQuestions, startTime } = req.body;
+    const { title, description, startTime } = req.body;
+    // Admin dashboard sends snake_case; accept camelCase too
+    const durationSeconds = Number(req.body.duration_seconds ?? req.body.durationSeconds);
+    const shuffleQuestions = req.body.shuffle_questions ?? req.body.shuffleQuestions;
+    if (!title || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return res.status(400).json({ error: 'Title and a positive duration are required' });
+    }
     const quiz = await prisma.quiz.create({
       data: { title, description, duration_seconds: durationSeconds, shuffle_questions: !!shuffleQuestions, start_time: startTime ? new Date(startTime) : null, created_by: req.user.id },
     });
@@ -70,7 +76,10 @@ export const getQuiz = async (req: any, res: Response) => {
 
 export const updateQuiz = async (req: any, res: Response) => {
   try {
-    const { title, description, durationSeconds, shuffleQuestions, status, startTime } = req.body;
+    const { title, description, status, startTime } = req.body;
+    const rawDuration = req.body.duration_seconds ?? req.body.durationSeconds;
+    const durationSeconds = rawDuration !== undefined ? Number(rawDuration) : undefined;
+    const shuffleQuestions = req.body.shuffle_questions ?? req.body.shuffleQuestions;
     const quiz = await prisma.quiz.update({
       where: { id: String(req.params.id) },
       data: { title, description, duration_seconds: durationSeconds, shuffle_questions: shuffleQuestions, status, start_time: startTime ? new Date(startTime) : undefined },
